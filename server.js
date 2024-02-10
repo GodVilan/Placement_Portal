@@ -56,7 +56,7 @@ app.use(express.json());
 
 const port = process.env.PORT || 5010;
 
-app.post('/', async (req, res) => {
+app.post('c:\MajorProject\MERN_Based_Placement_Management_Portal\front-end\build/', async (req, res) => {
     const { uid, password } = req.body;
 
     try {
