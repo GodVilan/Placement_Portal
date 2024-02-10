@@ -18,6 +18,11 @@ import os from "os";
 import { spawn } from 'child_process';
 import fs from 'fs';
 import validator from 'validator';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 config();
 
