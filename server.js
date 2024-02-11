@@ -56,7 +56,7 @@ app.use(express.json());
 
 const port = process.env.PORT || 5010;
 
-app.post('/api/v1/', async (req, res) => {
+app.post('/', async (req, res) => {
 
     const { uid, password } = req.body;
 
@@ -72,7 +72,7 @@ app.post('/api/v1/', async (req, res) => {
     }
 });
 
-app.get('/api/v1/AddSkills/get-skills/:uid', async (req, res) => {
+app.get('/AddSkills/get-skills/:uid', async (req, res) => {
   const { uid } = req.params;
 
   try {
@@ -90,7 +90,7 @@ app.get('/api/v1/AddSkills/get-skills/:uid', async (req, res) => {
   }
 });
 
-app.post('/api/v1/AddSkills/add-skill/:uid', async (req, res) => {
+app.post('/AddSkills/add-skill/:uid', async (req, res) => {
   const { uid, skill } = req.body;
 
   try {
@@ -114,7 +114,7 @@ app.post('/api/v1/AddSkills/add-skill/:uid', async (req, res) => {
   }
 });
 
-app.delete('/api/v1/AddSkills/delete-skill/:uid', async (req, res) => {
+app.delete('/AddSkills/delete-skill/:uid', async (req, res) => {
   const { uid } = req.params;
   const { skill } = req.body;
   try {
@@ -133,7 +133,7 @@ app.delete('/api/v1/AddSkills/delete-skill/:uid', async (req, res) => {
 });
 
 
-app.get('/api/v1/Achievements/get-achievements/:uid', async (req, res) => {
+app.get('/Achievements/get-achievements/:uid', async (req, res) => {
   const { uid } = req.params;
 
   try {
@@ -151,7 +151,7 @@ app.get('/api/v1/Achievements/get-achievements/:uid', async (req, res) => {
   }
 });
 
-app.post('/api/v1/Achievements/add-achievement/:uid', async (req, res) => {
+app.post('/Achievements/add-achievement/:uid', async (req, res) => {
   const { uid, achievement } = req.body;
 
   try {
@@ -173,7 +173,7 @@ app.post('/api/v1/Achievements/add-achievement/:uid', async (req, res) => {
   }
 });
 
-app.delete('/api/v1/Achievements/delete-achievement/:uid', async (req, res) => {
+app.delete('/Achievements/delete-achievement/:uid', async (req, res) => {
   const { uid } = req.params;
   const { achievement } = req.body;
   try {
@@ -191,12 +191,12 @@ app.delete('/api/v1/Achievements/delete-achievement/:uid', async (req, res) => {
   }
 });
 
-app.get('/api/v1/ViewCompanies/get-companies', async (req, res) => {
+app.get('/ViewCompanies/get-companies', async (req, res) => {
   const companies = await companyModel.find({});
 
   res.json(companies);
 });
-app.get('/api/v1/StdInterests/get-stdinterest/:uid', async (req, res) => {
+app.get('/StdInterests/get-stdinterest/:uid', async (req, res) => {
   try {
       const uid = req.params.uid;
       const studentInterests = await stdinterestModel.find({ students: uid });
@@ -215,7 +215,7 @@ app.get('/api/v1/StdInterests/get-stdinterest/:uid', async (req, res) => {
 });
 
 
-app.post('/api/v1/AddCompanies/add-company', upload.any(), async (req, res) => {
+app.post('/AddCompanies/add-company', upload.any(), async (req, res) => {
   const { companyName, jobTitle, reqSkills, jobCriteria, cmpPackage } = req.body;
   const file = req.files[0];
   console.log(req.files);
@@ -240,7 +240,7 @@ app.post('/api/v1/AddCompanies/add-company', upload.any(), async (req, res) => {
   }
 });
 
-app.delete('/api/v1/ViewCompanies/delete-company/:companyToDelete', async (req, res) => {
+app.delete('/ViewCompanies/delete-company/:companyToDelete', async (req, res) => {
   const { companyToDelete } = req.params;
   
   try {
@@ -252,7 +252,7 @@ app.delete('/api/v1/ViewCompanies/delete-company/:companyToDelete', async (req, 
   }
 });
 
-app.post('/api/v1/Apply/std', async (req, res) => {
+app.post('/Apply/std', async (req, res) => {
   const { companyName, uid} = req.body;
   try {
     let stdInterest = await stdinterestModel.findOne({ companyName });
@@ -289,7 +289,7 @@ app.get('/api/v1/AddCertifications/get-certifications/:uid', async (req, res) =>
   }
 });
 
-app.get('/api/v1/UploadResume/get-resume/:uid', async (req, res) => {
+app.get('/UploadResume/get-resume/:uid', async (req, res) => {
   try {
       const doc = await resumeModel.findOne({ uid: req.params.uid });
       if (!doc) {
@@ -303,7 +303,7 @@ app.get('/api/v1/UploadResume/get-resume/:uid', async (req, res) => {
   }
 });
 
-app.post('/api/v1/UploadResume/upload/:uid', upload.single('resume'), async (req, res) => {
+app.post('/UploadResume/upload/:uid', upload.single('resume'), async (req, res) => {
   try {
       const doc = await resumeModel.findOneAndUpdate(
           { uid: req.params.uid },
@@ -317,7 +317,7 @@ app.post('/api/v1/UploadResume/upload/:uid', upload.single('resume'), async (req
 });
 
 
-app.post('/api/v1/AddCertifications/add-certification/:uid', upload.single('certificationFile'), async (req, res) => {
+app.post('/AddCertifications/add-certification/:uid', upload.single('certificationFile'), async (req, res) => {
   try {
     const uid = req.params.uid;
     const { name } = req.body;
@@ -340,7 +340,7 @@ app.post('/api/v1/AddCertifications/add-certification/:uid', upload.single('cert
   }
 });
 
-app.delete('/api/v1/AddCertifications/delete-certification/:uid', async (req, res) => {
+app.delete('/AddCertifications/delete-certification/:uid', async (req, res) => {
   try {
     const uid = req.params.uid;
     const { certification } = req.body;
@@ -359,7 +359,7 @@ app.delete('/api/v1/AddCertifications/delete-certification/:uid', async (req, re
     res.status(500).send('Server error');
   }
 });
-app.get('/api/v1/AddCertifications/download-certification/:uid/:certificationName', async (req, res) => {
+app.get('/AddCertifications/download-certification/:uid/:certificationName', async (req, res) => {
   try {
     const { uid, certificationName } = req.params;
     const userCertifications = await certificationModel.findOne({ uid: uid });
@@ -377,14 +377,14 @@ app.get('/api/v1/AddCertifications/download-certification/:uid/:certificationNam
   }
 });
 
-app.post('/api/v1/api/compileAndRun', (req, res) => {
+app.post('/api/compileAndRun', (req, res) => {
   const { uid, problemId, code, language, input } = req.body;
   compileAndRun(code, language, input)
     .then(output => res.json({ output }))
     // .catch(error => res.json({ error: `Error: ${error}` })); // Uncomment this line to handle errors
 });
 
-app.post('/api/v1/api/submit', async (req, res) => {
+app.post('/api/submit', async (req, res) => {
   const { uid, problemId, problemName, code, language, testCases } = req.body; // Include language
   let status = 'Accepted';
   for (let i = 0; i < testCases.length; i++) {
@@ -538,7 +538,7 @@ function checkOutput(output, expectedOutput) {
   return output === expectedOutput;
 }
 
-app.get('/api/v1/solvedCount/:uid', async (req, res) => {
+app.get('/solvedCount/:uid', async (req, res) => {
   try {
     const { uid } = req.params;
     const student = await solCountModel.findOne({ uid });
@@ -551,7 +551,7 @@ app.get('/api/v1/solvedCount/:uid', async (req, res) => {
     res.json({ message: 'Server error' });
   }
 });
-app.get('/api/v1/api/submissions', async (req, res) => {
+app.get('/api/submissions', async (req, res) => {
   const { uid } = req.query;
   
   try {
