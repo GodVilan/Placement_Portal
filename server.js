@@ -18,11 +18,7 @@ import os from "os";
 import { spawn } from 'child_process';
 import fs from 'fs';
 import validator from 'validator';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+import stdProjectModel from "./models/stdProjectModel.js";
 
 config();
 
@@ -30,34 +26,11 @@ const app = express();
 app.use(cors());
 const upload = multer();
 app.use(bodyParser.json());
-// app.use(cors(
-//   {
-//     origin : ["https://placement-management-portal.vercel.app/"],
-//     methods : ["POST", "GET"],
-//     credentials: true
-//   }
-// ));
 app.use(express.json());
-// const submissionSchema = new mongoose.Schema({
-//   uid: String,
-//   problemId: Number,
-//   problemName: String,
-//   code: [String],
-//   status: [String],
-// });
-
-// const studentSchema = new mongoose.Schema({
-//   uid: String,
-//   solved: Number,
-// });
-
-// const Submission = mongoose.model('Submission', submissionSchema);
-// const Student = mongoose.model('Student', studentSchema);
 
 const port = process.env.PORT || 5010;
 
 app.post('/', async (req, res) => {
-
     const { uid, password } = req.body;
 
     try {
@@ -272,7 +245,7 @@ app.post('/Apply/std', async (req, res) => {
   }
 });
 
-app.get('/api/v1/AddCertifications/get-certifications/:uid', async (req, res) => {
+app.get('/AddCertifications/get-certifications/:uid', async (req, res) => {
   try {
     const uid = req.params.uid;
 
@@ -381,17 +354,16 @@ app.post('/api/compileAndRun', (req, res) => {
   const { uid, problemId, code, language, input } = req.body;
   compileAndRun(code, language, input)
     .then(output => res.json({ output }))
-    // .catch(error => res.json({ error: `Error: ${error}` })); // Uncomment this line to handle errors
 });
 
 app.post('/api/submit', async (req, res) => {
-  const { uid, problemId, problemName, code, language, testCases } = req.body; // Include language
+  const { uid, problemId, problemName, code, language, testCases } = req.body;
   let status = 'Accepted';
   for (let i = 0; i < testCases.length; i++) {
     const { input, output: expectedOutput } = testCases[i];
     try {
       const output = await compileAndRun(code, language, input);
-      if (output === 'Compilation error' || output === 'Runtime error' || output === 'Unsupported language') {
+      if (output === 'Compilation error' || output === 'Runtime error' || output === 'Unsupported language' || output === 'TLE: Time Limit Exceeded') {
         status = output;
         break;
       }
@@ -431,7 +403,20 @@ app.post('/api/submit', async (req, res) => {
 
 function compileAndRun(code, language, input) {
   return new Promise((resolve, reject) => {
+    const timeLimit = 5000;
     let process;
+    let timer;
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      if (process) process.kill();
+    };
+
+    const handleTimeout = () => {
+      cleanup();
+      resolve('TLE: Time Limit Exceeded');
+    };
+
     if (language === 'python') {
       process = spawn('python', ['-c', code]);
     } else if (language === 'java') {
@@ -439,10 +424,12 @@ function compileAndRun(code, language, input) {
       const compile = spawn('javac', ['Main.java']);
       compile.on('close', (code) => {
         if (code !== 0) {
+          cleanup();
           resolve('Compilation error');
           return;
         }
         process = spawn('java', ['Main']);
+        timer = setTimeout(handleTimeout, timeLimit);
         runProcess(process, input, resolve, reject);
       });
       return;
@@ -451,65 +438,24 @@ function compileAndRun(code, language, input) {
       const compile = spawn('g++', ['main.cpp', '-o', 'main']);
       compile.on('close', (code) => {
         if (code !== 0) {
-          console.log(code);
+          cleanup();
           resolve('Compilation error');
           return;
         }
         process = spawn('./main');
+        timer = setTimeout(handleTimeout, timeLimit);
         runProcess(process, input, resolve, reject);
       });
       return;
     } else {
+      cleanup();
       resolve('Unsupported language');
       return;
     }
+    timer = setTimeout(handleTimeout, timeLimit);
     runProcess(process, input, resolve, reject);
   });
 }
-
-// function compileAndRun(code, language, input) {
-//   return new Promise((resolve, reject) => {
-//     let process;
-//     const tempDir = os.tmpdir();
-//     const tempFile = path.join(tempDir, `temp${Date.now()}`);
-
-//     if (language === 'python') {
-//       fs.writeFileSync(`${tempFile}.py`, code);
-//       process = spawn('python', [`${tempFile}.py`]);
-//     } else if (language === 'java') {
-//       fs.writeFileSync(`${tempFile}.java`, code);
-//       const compile = spawn('javac', [`${tempFile}.java`]);
-//       compile.on('close', (code) => {
-//         if (code !== 0) {
-//           resolve('Compilation error');
-//           return;
-//         }
-//         process = spawn('java', ['-cp', tempDir, path.basename(tempFile)]);
-//         runProcess(process, input, resolve, reject);
-//       });
-//       return;
-//     } else if (language === 'cpp') {
-//       fs.writeFileSync(`${tempFile}.cpp`, code);
-//       const compile = spawn('g++', [`${tempFile}.cpp`, '-o', `${tempFile}.out`]);
-//       compile.on('close', (code) => {
-//         if (code !== 0) {
-//           resolve('Compilation error');
-//           return;
-//         }
-//         process = spawn(`${tempFile}.out`);
-//         runProcess(process, input, resolve, reject);
-//       });
-//       return;
-//     } else if (language === 'javascript') {
-//       fs.writeFileSync(`${tempFile}.js`, code);
-//       process = spawn('node', [`${tempFile}.js`]);
-//     } else {
-//       resolve('Unsupported language');
-//       return;
-//     }
-//     runProcess(process, input, resolve, reject);
-//   });
-// }
 
 function runProcess(process, input, resolve, reject) {
   let output = '';
@@ -562,10 +508,73 @@ app.get('/api/submissions', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, "./client/build")));
+app.get('/get-projects/:uid', async (req, res) => {
+  try {
+      const projects = await stdProjectModel.findOne({ uid: req.params.uid });
+      if (!projects) {
+          return res.send({ message: 'No Projects' });
+      }
+      res.send(projects);
+  } catch (err) {
+      res.status(500).send({ error: 'Something went wrong' });
+  }
+});
+
+app.post('/add-project/:uid', async (req, res) => {
+  try {
+      let project = await stdProjectModel.findOne({ uid: req.params.uid });
+      if (!project) {
+          project = new stdProjectModel({
+              uid: req.params.uid,
+              projectTitle: [req.body.projectTitle],
+              projectObj: [req.body.projectObj],
+              projectURL: [req.body.projectURL]
+          });
+      } else {
+          project.projectTitle.push(req.body.projectTitle);
+          project.projectObj.push(req.body.projectObj);
+          project.projectURL.push(req.body.projectURL);
+      }
+      await project.save();
+      res.send(project);
+  } catch (err) {
+      res.status(500).send({ error: 'Something went wrong' });
+  }
+});
+
+app.delete('/delete-project/:uid', async (req, res) => {
+  try {
+      const { uid } = req.params;
+      const { projectTitle, projectObj, projectURL } = req.body;
+
+      const project = await stdProjectModel.findOne({ uid: uid });
+      if (!project) {
+          return res.status(404).send({ message: 'No Project Found' });
+      }
+
+      const indexTitle = project.projectTitle.indexOf(projectTitle);
+      const indexObj = project.projectObj.indexOf(projectObj);
+      const indexURL = project.projectURL.indexOf(projectURL);
+
+      if (indexTitle !== -1 && indexObj !== -1 && indexURL !== -1) {
+          project.projectTitle.splice(indexTitle, 1);
+          project.projectObj.splice(indexObj, 1);
+          project.projectURL.splice(indexURL, 1);
+          await project.save();
+          res.send({ message: 'Project deleted' });
+      } else {
+          res.status(404).send({ message: 'Project not found' });
+      }
+  } catch (err) {
+      res.status(500).send({ error: 'Something went wrong' });
+  }
+});
+
+
+app.use(express.static(path.join(__dirname, "./front-end/build")));
 
 app.get("*", function (req, res) {
-  res.sendFile(path.join(__dirname, "./client/build/index.html"));
+  res.sendFile(path.join(__dirname, "./front-end/build/index.html"));
 });
 
 const uri = process.env.MONGO_DB;
