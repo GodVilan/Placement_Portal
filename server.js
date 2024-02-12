@@ -575,10 +575,10 @@ app.delete('/delete-project/:uid', async (req, res) => {
 });
 
 
-app.use(express.static(path.join(__dirname, "./front-end/build")));
+app.use(express.static(path.join(__dirname, "./client/build")));
 
 app.get("*", function (req, res) {
-  res.sendFile(path.join(__dirname, "./front-end/build/index.html"));
+  res.sendFile(path.join(__dirname, "./client/build/index.html"));
 });
 
 const uri = process.env.MONGO_DB;
