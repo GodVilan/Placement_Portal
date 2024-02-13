@@ -19,6 +19,10 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import validator from 'validator';
 import stdProjectModel from "./models/stdProjectModel.js";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 config();
 
@@ -654,6 +658,12 @@ app.delete('/delete-project/:uid', async (req, res) => {
   } catch (err) {
       res.status(500).send({ error: 'Something went wrong' });
   }
+});
+
+app.use(express.static(path.join(__dirname, "./client/build")));
+
+app.get("*", function (req, res) {
+  res.sendFile(path.join(__dirname, "./client/build/index.html"));
 });
 
 const uri = process.env.MONGO_DB;
